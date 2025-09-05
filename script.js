@@ -96,6 +96,9 @@ function initializeEventListeners() {
         if (e.target === this) hideApiKeyModal();
     });
 
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', handleSearch);
+
     // Splitter functionality
     initializeSplitter();
 }
@@ -146,12 +149,12 @@ function saveApiKey() {
     }
 }
 
-// Code generation with DeepSeek API
+// Documentation generation with DeepSeek API
 async function generateCode() {
     const prompt = document.getElementById('promptInput').value.trim();
     
     if (!prompt) {
-        alert('Please enter a description of what you want to generate');
+        alert('Please enter a description of what documentation you want to generate');
         return;
     }
 
@@ -161,7 +164,7 @@ async function generateCode() {
     }
 
     showLoading(true);
-    addOutputLine(`Generating code: ${prompt}`, 'info');
+    addOutputLine(`Generating documentation: ${prompt}`, 'info');
 
     try {
         const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -175,7 +178,7 @@ async function generateCode() {
                 messages: [
                     {
                         role: 'system',
-                        content: `You are a helpful coding assistant. Generate clean, well-commented ${currentLanguage} code based on the user's request. Only return the code, no explanations unless specifically asked.`
+                        content: `You are a helpful documentation assistant. Generate clean, well-structured Markdown documentation based on the user's request. Focus on creating professional, comprehensive documentation that is easy to read and understand. Include proper headings, code examples, lists, and formatting. Only return the Markdown content, no explanations unless specifically asked.`
                     },
                     {
                         role: 'user',
@@ -192,25 +195,25 @@ async function generateCode() {
         }
 
         const data = await response.json();
-        const generatedCode = data.choices[0].message.content;
+        const generatedDocs = data.choices[0].message.content;
 
-        // Clean up the generated code (remove markdown code blocks if present)
-        const cleanCode = generatedCode.replace(/```[\w]*\n?/g, '').trim();
+        // Clean up the generated documentation (remove markdown code blocks if present)
+        const cleanDocs = generatedDocs.replace(/```[\w]*\n?/g, '').trim();
 
-        // Insert generated code into editor
+        // Insert generated documentation into editor
         if (monacoEditor) {
             const position = monacoEditor.getPosition();
             monacoEditor.executeEdits('', [{
                 range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                text: cleanCode + '\n'
+                text: cleanDocs + '\n'
             }]);
         }
 
-        addOutputLine('Code generated successfully!', 'success');
+        addOutputLine('Documentation generated successfully!', 'success');
         document.getElementById('promptInput').value = '';
 
     } catch (error) {
-        console.error('Error generating code:', error);
+        console.error('Error generating documentation:', error);
         addOutputLine(`Error: ${error.message}`, 'error');
         
         if (error.message.includes('401')) {
@@ -539,6 +542,6 @@ window.addEventListener('error', function(e) {
 
 // Welcome message
 setTimeout(() => {
-    addOutputLine('Welcome to Dynamic Code Studio!', 'success');
-    addOutputLine('Tips: Use Ctrl+Enter in the prompt to generate code, F5 to run, Ctrl+S to save', 'info');
+    addOutputLine('Welcome to Dynamic Docs Studio!', 'success');
+    addOutputLine('Tips: Use Ctrl+Enter in the prompt to generate documentation, F5 to preview, Ctrl+S to save', 'info');
 }, 1000);
