@@ -1,0 +1,544 @@
+// Global variables
+let monacoEditor = null;
+let currentLanguage = 'python';
+let apiKey = localStorage.getItem('deepseek_api_key') || '';
+let currentFiles = {
+    'main.py': {
+        content: '# Welcome to Dynamic Code Studio\n# Start coding or use AI to generate code!\n\ndef hello_world():\n    print("Hello, World!")\n    return "Hello from Python!"\n\nif __name__ == "__main__":\n    result = hello_world()\n    print(result)',
+        language: 'python'
+    },
+    'README.md': {
+        content: '# My Project\n\nThis is a sample project created with Dynamic Code Studio.\n\n## Features\n\n- AI-powered code generation\n- Integrated documentation\n- Multiple language support\n\n## Getting Started\n\n1. Write your code in the editor\n2. Document your project in this panel\n3. Use AI to generate code snippets\n\n## Usage\n\nDescribe what you want to build in the prompt box and let AI generate the code for you!',
+        language: 'markdown'
+    }
+};
+let currentFile = 'main.py';
+let isDocsPreviewMode = false;
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMonacoEditor();
+    initializeEventListeners();
+    initializeDocumentation();
+    checkApiKey();
+    updateFileTree();
+});
+
+// Initialize Monaco Editor
+function initializeMonacoEditor() {
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+    
+    require(['vs/editor/editor.main'], function() {
+        monacoEditor = monaco.editor.create(document.getElementById('codeEditor'), {
+            value: currentFiles[currentFile].content,
+            language: currentFiles[currentFile].language,
+            theme: 'vs-dark',
+            automaticLayout: true,
+            fontSize: 14,
+            minimap: { enabled: true },
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            bracketMatching: 'always',
+            autoIndent: 'full',
+            formatOnPaste: true,
+            formatOnType: true
+        });
+
+        // Auto-save content when editor changes
+        monacoEditor.onDidChangeModelContent(() => {
+            currentFiles[currentFile].content = monacoEditor.getValue();
+            saveToLocalStorage();
+        });
+
+        // Load saved content from localStorage
+        loadFromLocalStorage();
+    });
+}
+
+// Initialize event listeners
+function initializeEventListeners() {
+    // Header controls
+    document.getElementById('generateBtn').addEventListener('click', showApiKeyModal);
+    document.getElementById('saveBtn').addEventListener('click', saveProject);
+    document.getElementById('loadBtn').addEventListener('click', loadProject);
+
+    // Code generation
+    document.getElementById('generateCodeBtn').addEventListener('click', generateCode);
+    document.getElementById('promptInput').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            generateCode();
+        }
+    });
+
+    // Editor controls
+    document.getElementById('runCodeBtn').addEventListener('click', runCode);
+    document.getElementById('formatCodeBtn').addEventListener('click', formatCode);
+
+    // Documentation controls
+    document.getElementById('toggleDocsMode').addEventListener('click', toggleDocsMode);
+
+    // Output controls
+    document.getElementById('clearOutputBtn').addEventListener('click', clearOutput);
+
+    // Settings
+    document.getElementById('languageSelect').addEventListener('change', changeLanguage);
+    document.getElementById('themeSelect').addEventListener('change', changeTheme);
+
+    // File tree
+    document.getElementById('fileTree').addEventListener('click', handleFileClick);
+
+    // API Key modal
+    document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
+    document.getElementById('cancelApiKeyBtn').addEventListener('click', hideApiKeyModal);
+    document.getElementById('apiKeyModal').addEventListener('click', function(e) {
+        if (e.target === this) hideApiKeyModal();
+    });
+
+    // Splitter functionality
+    initializeSplitter();
+}
+
+// Initialize documentation panel
+function initializeDocumentation() {
+    const docsEditor = document.getElementById('docsEditor');
+    docsEditor.value = currentFiles['README.md'].content;
+    
+    docsEditor.addEventListener('input', function() {
+        currentFiles['README.md'].content = docsEditor.value;
+        if (isDocsPreviewMode) {
+            updateDocsPreview();
+        }
+        saveToLocalStorage();
+    });
+
+    updateDocsPreview();
+}
+
+// API Key management
+function checkApiKey() {
+    if (!apiKey) {
+        showApiKeyModal();
+    }
+}
+
+function showApiKeyModal() {
+    document.getElementById('apiKeyModal').classList.remove('hidden');
+    document.getElementById('apiKeyInput').focus();
+}
+
+function hideApiKeyModal() {
+    document.getElementById('apiKeyModal').classList.add('hidden');
+}
+
+function saveApiKey() {
+    const input = document.getElementById('apiKeyInput');
+    const newApiKey = input.value.trim();
+    
+    if (newApiKey) {
+        apiKey = newApiKey;
+        localStorage.setItem('deepseek_api_key', apiKey);
+        hideApiKeyModal();
+        addOutputLine('API key saved successfully!', 'success');
+    } else {
+        alert('Please enter a valid API key');
+    }
+}
+
+// Code generation with DeepSeek API
+async function generateCode() {
+    const prompt = document.getElementById('promptInput').value.trim();
+    
+    if (!prompt) {
+        alert('Please enter a description of what you want to generate');
+        return;
+    }
+
+    if (!apiKey) {
+        showApiKeyModal();
+        return;
+    }
+
+    showLoading(true);
+    addOutputLine(`Generating code: ${prompt}`, 'info');
+
+    try {
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'deepseek-coder',
+                messages: [
+                    {
+                        role: 'system',
+                        content: `You are a helpful coding assistant. Generate clean, well-commented ${currentLanguage} code based on the user's request. Only return the code, no explanations unless specifically asked.`
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                max_tokens: 2048,
+                temperature: 0.3
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const generatedCode = data.choices[0].message.content;
+
+        // Clean up the generated code (remove markdown code blocks if present)
+        const cleanCode = generatedCode.replace(/```[\w]*\n?/g, '').trim();
+
+        // Insert generated code into editor
+        if (monacoEditor) {
+            const position = monacoEditor.getPosition();
+            monacoEditor.executeEdits('', [{
+                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                text: cleanCode + '\n'
+            }]);
+        }
+
+        addOutputLine('Code generated successfully!', 'success');
+        document.getElementById('promptInput').value = '';
+
+    } catch (error) {
+        console.error('Error generating code:', error);
+        addOutputLine(`Error: ${error.message}`, 'error');
+        
+        if (error.message.includes('401')) {
+            addOutputLine('Invalid API key. Please check your DeepSeek API key.', 'error');
+            showApiKeyModal();
+        }
+    } finally {
+        showLoading(false);
+    }
+}
+
+// File management
+function handleFileClick(e) {
+    const fileItem = e.target.closest('.file-item');
+    if (!fileItem) return;
+
+    const fileName = fileItem.dataset.file;
+    if (fileName && fileName !== currentFile) {
+        switchToFile(fileName);
+    }
+}
+
+function switchToFile(fileName) {
+    // Save current file content
+    if (monacoEditor && currentFile) {
+        currentFiles[currentFile].content = monacoEditor.getValue();
+    }
+
+    currentFile = fileName;
+    const file = currentFiles[fileName];
+
+    // Update editor
+    if (monacoEditor && fileName !== 'README.md') {
+        monacoEditor.setValue(file.content);
+        monaco.editor.setModelLanguage(monacoEditor.getModel(), file.language);
+    }
+
+    // Update documentation panel
+    if (fileName === 'README.md') {
+        document.getElementById('docsEditor').value = file.content;
+        updateDocsPreview();
+    }
+
+    // Update UI
+    updateFileTree();
+    updateLanguageSelect();
+}
+
+function updateFileTree() {
+    const fileItems = document.querySelectorAll('.file-item');
+    fileItems.forEach(item => {
+        item.classList.toggle('active', item.dataset.file === currentFile);
+    });
+}
+
+function updateLanguageSelect() {
+    const select = document.getElementById('languageSelect');
+    if (currentFiles[currentFile]) {
+        select.value = currentFiles[currentFile].language;
+        currentLanguage = currentFiles[currentFile].language;
+    }
+}
+
+// Editor controls
+function runCode() {
+    const code = monacoEditor.getValue();
+    addOutputLine('Running code...', 'info');
+    
+    // Simulate code execution (in a real implementation, you'd send this to a backend)
+    setTimeout(() => {
+        addOutputLine('Code execution completed.', 'success');
+        addOutputLine('Note: This is a demo. In a real implementation, code would be executed on a backend server.', 'info');
+    }, 1000);
+}
+
+function formatCode() {
+    if (monacoEditor) {
+        monacoEditor.getAction('editor.action.formatDocument').run();
+        addOutputLine('Code formatted successfully!', 'success');
+    }
+}
+
+function changeLanguage() {
+    const select = document.getElementById('languageSelect');
+    const newLanguage = select.value;
+    
+    if (monacoEditor && currentFile !== 'README.md') {
+        monaco.editor.setModelLanguage(monacoEditor.getModel(), newLanguage);
+        currentFiles[currentFile].language = newLanguage;
+        currentLanguage = newLanguage;
+        saveToLocalStorage();
+    }
+}
+
+function changeTheme() {
+    const select = document.getElementById('themeSelect');
+    const theme = select.value;
+    
+    if (monacoEditor) {
+        monaco.editor.setTheme(theme);
+    }
+}
+
+// Documentation controls
+function toggleDocsMode() {
+    isDocsPreviewMode = !isDocsPreviewMode;
+    const editor = document.getElementById('docsEditor');
+    const preview = document.getElementById('docsPreview');
+    const toggleBtn = document.getElementById('toggleDocsMode');
+    
+    if (isDocsPreviewMode) {
+        editor.classList.add('hidden');
+        preview.classList.remove('hidden');
+        toggleBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        toggleBtn.title = 'Edit Mode';
+        updateDocsPreview();
+    } else {
+        editor.classList.remove('hidden');
+        preview.classList.add('hidden');
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        toggleBtn.title = 'Preview Mode';
+    }
+}
+
+function updateDocsPreview() {
+    const docsContent = document.getElementById('docsEditor').value;
+    const preview = document.getElementById('docsPreview');
+    
+    try {
+        preview.innerHTML = marked.parse(docsContent);
+    } catch (error) {
+        preview.innerHTML = '<p>Error rendering markdown preview</p>';
+    }
+}
+
+// Output management
+function addOutputLine(message, type = 'normal') {
+    const outputContent = document.getElementById('outputContent');
+    const line = document.createElement('div');
+    line.className = `output-line ${type}`;
+    line.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+    outputContent.appendChild(line);
+    outputContent.scrollTop = outputContent.scrollHeight;
+}
+
+function clearOutput() {
+    const outputContent = document.getElementById('outputContent');
+    outputContent.innerHTML = '';
+    addOutputLine('Output cleared');
+}
+
+// Project management
+function saveProject() {
+    const projectData = {
+        files: currentFiles,
+        currentFile: currentFile,
+        timestamp: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(projectData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = 'project.json';
+    link.click();
+    
+    addOutputLine('Project saved successfully!', 'success');
+}
+
+function loadProject() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const projectData = JSON.parse(e.target.result);
+                currentFiles = projectData.files;
+                currentFile = projectData.currentFile || 'main.py';
+                
+                // Update editor
+                if (monacoEditor) {
+                    switchToFile(currentFile);
+                }
+                
+                // Update documentation
+                document.getElementById('docsEditor').value = currentFiles['README.md'].content;
+                updateDocsPreview();
+                
+                saveToLocalStorage();
+                addOutputLine('Project loaded successfully!', 'success');
+                
+            } catch (error) {
+                addOutputLine('Error loading project: Invalid file format', 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+// Local storage management
+function saveToLocalStorage() {
+    const projectData = {
+        files: currentFiles,
+        currentFile: currentFile
+    };
+    localStorage.setItem('dynamic_code_studio_project', JSON.stringify(projectData));
+}
+
+function loadFromLocalStorage() {
+    const saved = localStorage.getItem('dynamic_code_studio_project');
+    if (saved) {
+        try {
+            const projectData = JSON.parse(saved);
+            currentFiles = { ...currentFiles, ...projectData.files };
+            currentFile = projectData.currentFile || currentFile;
+            
+            if (monacoEditor) {
+                switchToFile(currentFile);
+            }
+            
+            addOutputLine('Previous session restored', 'info');
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
+        }
+    }
+}
+
+// UI utilities
+function showLoading(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (show) {
+        overlay.classList.remove('hidden');
+    } else {
+        overlay.classList.add('hidden');
+    }
+}
+
+// Splitter functionality
+function initializeSplitter() {
+    const splitter = document.querySelector('.splitter');
+    const editorPanel = document.querySelector('.editor-panel');
+    const docsPanel = document.querySelector('.docs-panel');
+    
+    let isResizing = false;
+    
+    splitter.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        e.preventDefault();
+    });
+    
+    function handleMouseMove(e) {
+        if (!isResizing) return;
+        
+        const container = document.querySelector('.split-view');
+        const containerRect = container.getBoundingClientRect();
+        const newEditorWidth = e.clientX - containerRect.left;
+        const totalWidth = containerRect.width;
+        
+        if (newEditorWidth > 300 && (totalWidth - newEditorWidth) > 300) {
+            editorPanel.style.flex = `0 0 ${newEditorWidth}px`;
+            docsPanel.style.flex = `0 0 ${totalWidth - newEditorWidth - 4}px`;
+        }
+    }
+    
+    function handleMouseUp() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S: Save project
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        saveProject();
+    }
+    
+    // Ctrl+O: Load project
+    if (e.ctrlKey && e.key === 'o') {
+        e.preventDefault();
+        loadProject();
+    }
+    
+    // F5: Run code
+    if (e.key === 'F5') {
+        e.preventDefault();
+        runCode();
+    }
+    
+    // Ctrl+Shift+F: Format code
+    if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        formatCode();
+    }
+});
+
+// Initialize tooltips and help
+function initializeHelp() {
+    // Add tooltips to buttons
+    const buttons = document.querySelectorAll('[title]');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            // Could implement custom tooltip here
+        });
+    });
+}
+
+// Error handling
+window.addEventListener('error', function(e) {
+    console.error('Application error:', e.error);
+    addOutputLine(`Application error: ${e.error.message}`, 'error');
+});
+
+// Welcome message
+setTimeout(() => {
+    addOutputLine('Welcome to Dynamic Code Studio!', 'success');
+    addOutputLine('Tips: Use Ctrl+Enter in the prompt to generate code, F5 to run, Ctrl+S to save', 'info');
+}, 1000);

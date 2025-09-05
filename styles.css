@@ -1,0 +1,540 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* App Container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.header {
+    background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo i {
+    font-size: 1.5rem;
+    color: #3498db;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.header-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.btn-generate {
+    background: #e74c3c;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.btn-generate:hover {
+    background: #c0392b;
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    background: transparent;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.btn-icon:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+/* Main Content */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+}
+
+.sidebar-section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.file-item {
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.file-item:hover {
+    background: #e9ecef;
+}
+
+.file-item.active {
+    background: #3498db;
+    color: white;
+}
+
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: #666;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* Editor Container */
+.editor-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+/* Prompt Section */
+.prompt-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.prompt-input-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+#promptInput {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+#promptInput:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Split View */
+.split-view {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.editor-panel,
+.docs-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+}
+
+.editor-panel {
+    flex: 1;
+}
+
+.docs-panel {
+    flex: 0 0 400px;
+    border-left: 1px solid #e9ecef;
+}
+
+.splitter {
+    width: 4px;
+    background: #e9ecef;
+    cursor: col-resize;
+    transition: background 0.2s ease;
+}
+
+.splitter:hover {
+    background: #3498db;
+}
+
+.panel-header {
+    background: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panel-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* Code Editor */
+.code-editor {
+    flex: 1;
+    min-height: 400px;
+}
+
+/* Documentation */
+.docs-content {
+    flex: 1;
+    position: relative;
+}
+
+.docs-editor,
+.docs-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem;
+}
+
+.docs-editor {
+    background: white;
+    border: none;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+}
+
+.docs-preview {
+    background: white;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.docs-preview h1,
+.docs-preview h2,
+.docs-preview h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.docs-preview h1 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+.docs-preview h2 {
+    font-size: 1.3rem;
+}
+
+.docs-preview h3 {
+    font-size: 1.1rem;
+}
+
+.docs-preview p {
+    margin-bottom: 1rem;
+}
+
+.docs-preview code {
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+}
+
+.docs-preview pre {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.docs-preview pre code {
+    background: none;
+    padding: 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Output Panel */
+.output-panel {
+    height: 200px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+}
+
+.output-content {
+    flex: 1;
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 1rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    overflow-y: auto;
+    line-height: 1.4;
+}
+
+.output-line {
+    margin-bottom: 0.25rem;
+}
+
+.output-line.error {
+    color: #e74c3c;
+}
+
+.output-line.success {
+    color: #2ecc71;
+}
+
+.output-line.info {
+    color: #3498db;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner i {
+    font-size: 2rem;
+    color: #3498db;
+    margin-bottom: 1rem;
+}
+
+.loading-spinner p {
+    color: #666;
+    font-size: 1rem;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-content h3 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.modal-content p {
+    margin-bottom: 1rem;
+    color: #666;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.api-help {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.api-help a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.api-help a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+    }
+    
+    .docs-panel {
+        flex: 0 0 300px;
+    }
+    
+    .header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .header-controls {
+        flex-wrap: wrap;
+    }
+    
+    .prompt-input-container {
+        flex-direction: column;
+    }
+    
+    .btn-generate {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .split-view {
+        flex-direction: column;
+    }
+    
+    .docs-panel {
+        flex: 0 0 300px;
+        border-left: none;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .sidebar {
+        width: 180px;
+    }
+}
