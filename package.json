@@ -1,7 +1,7 @@
 {
-  "name": "dynamic-code-studio",
+  "name": "deepseek-coder-v2-documentation",
   "version": "1.0.0",
-  "description": "AI-powered code editor with DeepSeek integration and documentation support",
+  "description": "AI-powered documentation platform with DeepSeek Coder v2 integration",
   "main": "index.html",
   "scripts": {
     "start": "npx http-server . -p 8000 -c-1 --cors",
