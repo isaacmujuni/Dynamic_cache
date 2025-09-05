@@ -1,18 +1,18 @@
-// Global variables
+// Global variables for Dynamic Docs Studio
 let monacoEditor = null;
-let currentLanguage = 'python';
+let currentLanguage = 'markdown';
 let apiKey = localStorage.getItem('deepseek_api_key') || '';
 let currentFiles = {
-    'main.py': {
-        content: '# Welcome to Dynamic Code Studio\n# Start coding or use AI to generate code!\n\ndef hello_world():\n    print("Hello, World!")\n    return "Hello from Python!"\n\nif __name__ == "__main__":\n    result = hello_world()\n    print(result)',
-        language: 'python'
-    },
     'README.md': {
-        content: '# My Project\n\nThis is a sample project created with Dynamic Code Studio.\n\n## Features\n\n- AI-powered code generation\n- Integrated documentation\n- Multiple language support\n\n## Getting Started\n\n1. Write your code in the editor\n2. Document your project in this panel\n3. Use AI to generate code snippets\n\n## Usage\n\nDescribe what you want to build in the prompt box and let AI generate the code for you!',
+        content: '# Welcome to Dynamic Docs Studio\n\nA powerful AI-powered documentation platform that helps you create, edit, and manage documentation with ease.\n\n## Features\n\n- 🤖 **AI-Powered Documentation Generation** - Describe what you want to document, and AI will generate it for you\n- 📝 **Live Markdown Editor** - Write documentation with real-time preview\n- 🔍 **Smart Search** - Find content across all your documentation\n- 📚 **Multi-page Support** - Organize documentation into multiple pages\n- 🎨 **Professional Themes** - Choose from various documentation themes\n- 💾 **Export Options** - Export to PDF, HTML, or other formats\n\n## Getting Started\n\n1. **Choose a documentation page** from the sidebar\n2. **Describe what you want to document** in the prompt box\n3. **Let AI generate** the initial content\n4. **Edit and customize** using the live editor\n5. **Preview** your documentation in real-time\n\n## Example Prompts\n\nTry these prompts to get started:\n\n- "Create API documentation for user authentication"\n- "Write a getting started guide for new users"\n- "Generate FAQ section for common questions"\n- "Create installation instructions"\n- "Write troubleshooting guide"\n\n## Tips\n\n- Use **Ctrl+Enter** in the prompt to generate documentation\n- Use **Ctrl+S** to save your project\n- Use **F5** to preview the documentation\n- Switch between **Edit** and **Preview** modes as needed\n\nHappy documenting! 📚✨',
+        language: 'markdown'
+    },
+    'getting-started.md': {
+        content: '# Getting Started\n\nThis guide will help you get up and running with our platform quickly.\n\n## Prerequisites\n\nBefore you begin, make sure you have:\n\n- A modern web browser\n- Internet connection\n- DeepSeek API key (optional, for AI features)\n\n## Installation\n\n1. Download the application\n2. Extract the files\n3. Run the server\n4. Open in your browser\n\n## First Steps\n\n1. **Configure your API key** (if using AI features)\n2. **Choose your first documentation page**\n3. **Start writing** or use AI to generate content\n4. **Customize** the appearance and structure\n\n## Next Steps\n\n- Explore the different documentation templates\n- Learn about advanced features\n- Customize your documentation theme\n- Export your documentation\n\n## Need Help?\n\nIf you run into any issues:\n\n- Check the FAQ section\n- Review the troubleshooting guide\n- Contact support\n\n---\n\n*This documentation was generated with Dynamic Docs Studio*',
         language: 'markdown'
     }
 };
-let currentFile = 'main.py';
+let currentFile = 'README.md';
 let isDocsPreviewMode = false;
 
 // Initialize the application
