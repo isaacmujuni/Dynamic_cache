@@ -450,14 +450,67 @@ function loadFromLocalStorage() {
     }
 }
 
-// UI utilities
-function showLoading(show) {
-    const overlay = document.getElementById('loadingOverlay');
-    if (show) {
-        overlay.classList.remove('hidden');
-    } else {
-        overlay.classList.add('hidden');
+// Search functionality
+function handleSearch(e) {
+    const query = e.target.value.toLowerCase().trim();
+    const searchResults = document.getElementById('searchResults');
+    
+    if (!query) {
+        searchResults.classList.remove('show');
+        return;
     }
+    
+    const results = searchInDocumentation(query);
+    displaySearchResults(results);
+}
+
+function searchInDocumentation(query) {
+    const results = [];
+    
+    Object.keys(currentFiles).forEach(filename => {
+        const content = currentFiles[filename].content.toLowerCase();
+        const lines = content.split('\n');
+        
+        lines.forEach((line, index) => {
+            if (line.includes(query)) {
+                results.push({
+                    filename: filename,
+                    lineNumber: index + 1,
+                    content: line.trim(),
+                    title: filename.replace('.md', '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                });
+            }
+        });
+    });
+    
+    return results.slice(0, 10); // Limit to 10 results
+}
+
+function displaySearchResults(results) {
+    const searchResults = document.getElementById('searchResults');
+    
+    if (results.length === 0) {
+        searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
+    } else {
+        searchResults.innerHTML = results.map(result => `
+            <div class="search-result-item" onclick="goToSearchResult('${result.filename}', ${result.lineNumber})">
+                <div class="search-result-title">${result.title}</div>
+                <div class="search-result-snippet">${result.content.substring(0, 100)}...</div>
+            </div>
+        `).join('');
+    }
+    
+    searchResults.classList.add('show');
+}
+
+function goToSearchResult(filename, lineNumber) {
+    switchToFile(filename);
+    if (monacoEditor) {
+        monacoEditor.setPosition({ lineNumber: lineNumber, column: 1 });
+        monacoEditor.revealLineInCenter(lineNumber);
+    }
+    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('searchInput').value = '';
 }
 
 // Splitter functionality
